@@ -23,8 +23,9 @@ public class AuthService {
 
     private final JwtService           jwtService;
     private final UserDetailsService   userDetailsService;
+    private final RefreshTokenService  refreshService;
 
-    public JwtResponse register(RegistrationRequest req) {
+    public TokenPairResponse register(RegistrationRequest req) {
         if (userRepo.existsByEmail(req.email()))
             throw new IllegalArgumentException("E-mail already used");
 
@@ -39,17 +40,32 @@ public class AuthService {
                         .build()
         );
 
-        String token = jwtService.generateToken(
-                userDetailsService.loadUserByUsername(saved.getEmail()));
-        return new JwtResponse(token);
+        var userDetails  = userDetailsService.loadUserByUsername(saved.getEmail());
+        String accessJwt = jwtService.generateToken(userDetails);
+        String refresh   = refreshService.create(saved).getToken();
+
+        return new TokenPairResponse(accessJwt, refresh);
     }
 
-    public JwtResponse login(LoginRequest req) {
+    public TokenPairResponse login(LoginRequest req) {
         authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.email(), req.password()));
 
-        String token = jwtService.generateToken(
-                userDetailsService.loadUserByUsername(req.email()));
-        return new JwtResponse(token);
+        User user        = userRepo.findByEmail(req.email()).orElseThrow();
+        String accessJwt = jwtService.generateToken(
+                userDetailsService.loadUserByUsername(user.getEmail()));
+        String refresh   = refreshService.create(user).getToken();
+
+        return new TokenPairResponse(accessJwt, refresh);
+    }
+
+    public TokenPairResponse refresh(String refreshToken) {
+        var valid   = refreshService.verify(refreshToken);
+        var rotated = refreshService.rotate(valid);
+
+        String newAccess = jwtService.generateToken(
+                userDetailsService.loadUserByUsername(rotated.getUser().getEmail()));
+
+        return new TokenPairResponse(newAccess, rotated.getToken());
     }
 }
