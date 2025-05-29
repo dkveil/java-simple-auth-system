@@ -3,9 +3,10 @@ spring:
     url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}
     username: ${POSTGRES_USER:root}
     password: ${POSTGRES_PASSWORD:password}
-    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: false
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     open-in-view: false
