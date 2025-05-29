@@ -1,15 +1,14 @@
 package com.example.demo.example.controller;
 
+import com.example.demo.auth.dto.UserInfoResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.example.demo.auth.dto.UserInfoResponse;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,8 +16,12 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/example")
 @RequiredArgsConstructor
+@Tag(name = "Example")
 public class ExampleController {
 
+    @Operation(
+        summary = "User info via /example/me (permitAll, jwt-cookie optional)"
+    )
     @GetMapping("/me")
     public ResponseEntity<?> me(@AuthenticationPrincipal UserDetails principal) {
 
@@ -29,9 +32,8 @@ public class ExampleController {
                                      .map(GrantedAuthority::getAuthority)
                                      .collect(Collectors.toSet());
 
-        String msg = roles.contains("ROLE_ADMIN")
-                    ? "Zalogowany jako administrator"
-                    : "Zalogowany";
+        String msg = roles.contains("ROLE_ADMIN") ? "Zalogowany jako administrator"
+                                                  : "Zalogowany";
 
         return ResponseEntity.ok(
                 new UserInfoResponse(

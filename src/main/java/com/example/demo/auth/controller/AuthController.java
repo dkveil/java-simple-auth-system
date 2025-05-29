@@ -3,6 +3,10 @@ package com.example.demo.auth.controller;
 import com.example.demo.auth.dto.*;
 import com.example.demo.auth.jwt.JwtProperties;
 import com.example.demo.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +19,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentication")
 public class AuthController {
 
     private final AuthService   authService;
     private final JwtProperties props;
 
     private ResponseEntity<ApiMessageResponse> withCookies(TokenPairResponse pair,
-                                                           String message) {
+                                                           String msg) {
 
         ResponseCookie accessC = ResponseCookie.from("accessToken", pair.accessToken())
                 .httpOnly(true).secure(true).sameSite("Strict").path("/")
@@ -34,19 +39,32 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessC.toString())
                 .header(HttpHeaders.SET_COOKIE, refreshC.toString())
-                .body(new ApiMessageResponse(message));
+                .body(new ApiMessageResponse(msg));
     }
 
+    @Operation(
+        summary = "Register new user",
+        description = "Creates user, sets HttpOnly access & refresh cookies",
+        responses = @ApiResponse(responseCode = "200", description = "Registered")
+    )
     @PostMapping("/register")
     public ResponseEntity<ApiMessageResponse> register(@RequestBody RegistrationRequest req) {
         return withCookies(authService.register(req), "Zarejestrowano pomyślnie");
     }
 
+    @Operation(
+        summary = "Login",
+        description = "Authenticates user, sets HttpOnly cookies with JWT pair"
+    )
     @PostMapping("/login")
     public ResponseEntity<ApiMessageResponse> login(@RequestBody LoginRequest req) {
         return withCookies(authService.login(req), "Zalogowano pomyślnie");
     }
 
+    @Operation(
+        summary = "Refresh token pair",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PostMapping("/refresh")
     public ResponseEntity<ApiMessageResponse> refresh(
             @CookieValue("refreshToken") String rt) {
@@ -54,6 +72,10 @@ public class AuthController {
         return withCookies(authService.refresh(rt), "Odświeżono tokeny");
     }
 
+    @Operation(
+        summary = "Logout",
+        description = "Clears JWT cookies"
+    )
     @PostMapping("/logout")
     public ResponseEntity<ApiMessageResponse> logout() {
         ResponseCookie del1 = ResponseCookie.from("accessToken", "")
@@ -67,10 +89,15 @@ public class AuthController {
                 .body(new ApiMessageResponse("Wylogowano"));
     }
 
+    @Operation(
+        summary = "Current user info",
+        description = "Returns info for authenticated user (or message when anonymous)",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping("/me")
     public ResponseEntity<?> currentUser(@AuthenticationPrincipal UserDetails principal) {
 
-        if (principal == null)                    // brak lub nieważne tokeny
+        if (principal == null)
             return ResponseEntity.ok("Nie jesteś zalogowany");
 
         Set<String> roles = principal.getAuthorities().stream()
@@ -83,7 +110,7 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 new UserInfoResponse(
-                        principal.getUsername(),   // username = email
+                        principal.getUsername(),
                         principal.getUsername(),
                         roles,
                         msg));
