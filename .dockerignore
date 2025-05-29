@@ -1,0 +1,11 @@
+# build artefacts
+target/
+# scm
+.git
+.gitignore
+# IDE
+.idea/
+*.iml
+.vscode/
+# OS
+.DS_Store
