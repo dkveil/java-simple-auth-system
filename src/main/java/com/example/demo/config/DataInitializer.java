@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Set;
@@ -20,11 +19,7 @@ public class DataInitializer {
 
     private final RoleRepository roleRepo;
     private final UserRepository userRepo;
-
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     CommandLineRunner seedDatabase() {
@@ -38,7 +33,7 @@ public class DataInitializer {
                 userRepo.save(
                         User.builder()
                                 .email("admin@example.com")
-                                .password(passwordEncoder().encode("admin123"))
+                                .password(passwordEncoder.encode("admin123"))
                                 .roles(Set.of(adminRole))
                                 .build()
                 );
