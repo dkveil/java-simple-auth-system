@@ -1,0 +1,22 @@
+# Wspólny format dla całego repo
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size  = 4
+
+# Pliki konfiguracyjne (YAML/JSON/MD) – 2 spacje
+[*.{yml,yaml,json,md}]
+indent_size = 2
+
+# XML (np. pom.xml, Spring *.xml) – 2 spacje by nie rozciągać tagów
+[*.xml]
+indent_size = 2
+
+# Skrypty shellowe
+[*.{sh,cmd}]
+indent_size = 2
