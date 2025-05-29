@@ -10,3 +10,8 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:YTJjZDhkNTIzZTA1M2E1NTY0NGU0MDA0YzY1NjJkNjk=}
+    expiration-ms: 3600000
